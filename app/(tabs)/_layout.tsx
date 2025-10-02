@@ -1,35 +1,72 @@
 import { Tabs } from 'expo-router';
-import React from 'react';
-
-import { HapticTab } from '@/components/haptic-tab';
-import { IconSymbol } from '@/components/ui/icon-symbol';
-import { Colors } from '@/constants/theme';
-import { useColorScheme } from '@/hooks/use-color-scheme';
+import { View } from 'react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
         headerShown: false,
-        tabBarButton: HapticTab,
-      }}>
+        tabBarStyle: {
+          backgroundColor: '#000000',
+          borderTopColor: '#27272a',
+          borderTopWidth: 1,
+          height: 90,
+          paddingBottom: 30,
+          paddingTop: 10,
+        },
+        tabBarActiveTintColor: '#F7931A',
+        tabBarInactiveTintColor: '#71717a',
+        tabBarLabelStyle: {
+          fontSize: 12,
+          fontWeight: '600',
+        },
+      }}
+    >
       <Tabs.Screen
-        name="index"
+        name="home"
         options={{
           title: 'Home',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
+          tabBarIcon: ({ color, size }) => (
+            <View style={{ width: size, height: size }}>
+              <HomeIcon color={color} size={size} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
-        name="explore"
+        name="portfolio"
         options={{
-          title: 'Explore',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+          title: 'Portfolio',
+          tabBarIcon: ({ color, size }) => (
+            <View style={{ width: size, height: size }}>
+              <PortfolioIcon color={color} size={size} />
+            </View>
+          ),
         }}
       />
     </Tabs>
   );
 }
+
+// Simple icon components (will be replaced with proper icons later)
+const HomeIcon = ({ color, size }: { color: string; size: number }) => (
+  <View 
+    style={{ 
+      width: size, 
+      height: size, 
+      backgroundColor: color,
+      borderRadius: size / 4,
+    }} 
+  />
+);
+
+const PortfolioIcon = ({ color, size }: { color: string; size: number }) => (
+  <View 
+    style={{ 
+      width: size, 
+      height: size, 
+      backgroundColor: color,
+      borderRadius: size / 2,
+    }} 
+  />
+);
