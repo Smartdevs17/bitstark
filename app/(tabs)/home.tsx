@@ -15,7 +15,7 @@ export default function HomeScreen() {
   // Redirect to auth if not authenticated
   useEffect(() => {
     if (!auth.isLoading && !auth.isAuthenticated) {
-      router.replace('/auth');
+      router.replace('/auth' as any);
     }
   }, [auth.isAuthenticated, auth.isLoading]);
 
@@ -116,7 +116,7 @@ export default function HomeScreen() {
         <View className="mt-4 items-center">
           <Text 
             className="text-zinc-600 text-xs font-mono"
-            onPress={() => router.push('/settings')}
+            onPress={() => router.push('/settings' as any)}
           >
             {auth.email}
           </Text>

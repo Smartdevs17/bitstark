@@ -1,7 +1,7 @@
 import { HDKey } from '@scure/bip32';
 import * as bip39 from 'bip39';
 import * as SecureStore from 'expo-secure-store';
-import { ec, RpcProvider, stark } from 'starknet';
+import { ec, RpcProvider } from 'starknet';
 import { CONFIG } from './config';
 
 interface StarknetAccountData {
