@@ -67,7 +67,7 @@ export default function DepositScreen() {
       
       <ScrollView 
         className="flex-1"
-        contentContainerClassName="p-6"
+        contentContainerStyle={{ padding: 24 }}
       >
         {/* Header */}
         <View className="mb-8">

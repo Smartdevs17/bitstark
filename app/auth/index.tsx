@@ -1,15 +1,15 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-    KeyboardAvoidingView,
-    Platform,
-    SafeAreaView,
-    ScrollView,
-    StatusBar,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
+  KeyboardAvoidingView,
+  Platform,
+  SafeAreaView,
+  ScrollView,
+  StatusBar,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
 } from 'react-native';
 import { useAuth } from '../../hooks/useAuth';
 
@@ -31,17 +31,23 @@ export default function AuthScreen() {
       }
       const success = await auth.signUp(email, password);
       if (success) {
-        // Prompt for biometric setup if available
-        if (auth.biometricAvailable) {
-          router.push('/auth/setup-biometric' as any);
-        } else {
-          router.replace('/(tabs)/home');
-        }
+        // Add a small delay to ensure auth state is updated
+        setTimeout(() => {
+          // Prompt for biometric setup if available
+          if (auth.biometricAvailable) {
+            router.push('/auth/setup-biometric' as any);
+          } else {
+            router.replace('/(tabs)/home');
+          }
+        }, 100);
       }
     } else {
       const success = await auth.signIn(email, password);
       if (success) {
-        router.replace('/(tabs)/home');
+        // Add a small delay to ensure auth state is updated
+        setTimeout(() => {
+          router.replace('/(tabs)/home');
+        }, 100);
       }
     }
   };
@@ -57,13 +63,13 @@ export default function AuthScreen() {
     <SafeAreaView className="flex-1 bg-black">
       <StatusBar barStyle="light-content" />
       
-      <KeyboardAvoidingView
+      <KeyboardAvoidingView 
         behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         className="flex-1"
       >
-        <ScrollView
+        <ScrollView 
           className="flex-1"
-          contentContainerClassName="p-6"
+          contentContainerStyle={{ padding: 24 }}
           keyboardShouldPersistTaps="handled"
         >
           {/* Header */}
@@ -213,7 +219,7 @@ export default function AuthScreen() {
           )}
 
           {/* Toggle Mode */}
-          <View className="flex-row items-center justify-center">
+          <View className="flex-row items-center justify-center mb-4">
             <Text className="text-zinc-500 text-sm">
               {mode === 'signin'
                 ? "Don't have an account? "
@@ -225,6 +231,7 @@ export default function AuthScreen() {
               </Text>
             </TouchableOpacity>
           </View>
+
 
           {/* Import Account Link */}
           {mode === 'signup' && (
@@ -238,6 +245,7 @@ export default function AuthScreen() {
               </Text>
             </TouchableOpacity>
           )}
+
         </ScrollView>
       </KeyboardAvoidingView>
     </SafeAreaView>

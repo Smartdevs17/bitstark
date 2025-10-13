@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import bcrypt from 'bcryptjs';
 import * as LocalAuthentication from 'expo-local-authentication';
+import { CryptoUtils } from './cryptoUtils';
 
 interface UserCredentials {
   email: string;
@@ -23,6 +23,8 @@ const STORAGE_KEYS = {
 
 export class AuthService {
   private static instance: AuthService;
+  // Mock mode for development - set to true for instant auth
+  private readonly MOCK_MODE = false; // Set to false to test improved performance
 
   static getInstance(): AuthService {
     if (!AuthService.instance) {
@@ -77,7 +79,22 @@ export class AuthService {
 
   // Sign up new user
   async signUp(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    // Use mock mode for development
+    if (this.MOCK_MODE) {
+      console.log('🎭 Using mock signup for development');
+      return this.mockSignUp(email, password);
+    }
+
     try {
+      // Validate input parameters
+      if (!email || typeof email !== 'string') {
+        return { success: false, error: 'Email is required' };
+      }
+
+      if (!password || typeof password !== 'string') {
+        return { success: false, error: 'Password is required' };
+      }
+
       // Validate email
       if (!this.isValidEmail(email)) {
         return { success: false, error: 'Invalid email address' };
@@ -91,11 +108,20 @@ export class AuthService {
       // Check if user already exists
       const existingUser = await AsyncStorage.getItem(STORAGE_KEYS.USER_CREDENTIALS);
       if (existingUser) {
-        return { success: false, error: 'User already exists. Please sign in.' };
+        return { 
+          success: false, 
+          error: 'An account already exists on this device. Please sign in or use "Switch Account" to create a new account.' 
+        };
       }
 
-      // Hash password
-      const passwordHash = await bcrypt.hash(password, 10);
+      // Hash password with proper error handling
+      let passwordHash: string;
+      try {
+        passwordHash = await CryptoUtils.hashPassword(password);
+      } catch (hashError) {
+        console.error('Password hashing failed:', hashError);
+        return { success: false, error: 'Failed to process password. Please try again.' };
+      }
 
       // Store credentials
       const credentials: UserCredentials = {
@@ -122,7 +148,22 @@ export class AuthService {
 
   // Sign in existing user
   async signIn(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    // Use mock mode for development
+    if (this.MOCK_MODE) {
+      console.log('🎭 Using mock signin for development');
+      return this.mockSignIn(email, password);
+    }
+
     try {
+      // Validate input parameters
+      if (!email || typeof email !== 'string') {
+        return { success: false, error: 'Email is required' };
+      }
+
+      if (!password || typeof password !== 'string') {
+        return { success: false, error: 'Password is required' };
+      }
+
       // Get stored credentials
       const credentialsJson = await AsyncStorage.getItem(STORAGE_KEYS.USER_CREDENTIALS);
       if (!credentialsJson) {
@@ -136,8 +177,14 @@ export class AuthService {
         return { success: false, error: 'Invalid email or password' };
       }
 
-      // Verify password
-      const passwordMatch = await bcrypt.compare(password, credentials.passwordHash);
+      // Verify password with proper error handling
+      let passwordMatch: boolean;
+      try {
+        passwordMatch = await CryptoUtils.verifyPassword(password, credentials.passwordHash);
+      } catch (compareError) {
+        console.error('Password comparison failed:', compareError);
+        return { success: false, error: 'Failed to verify password. Please try again.' };
+      }
       if (!passwordMatch) {
         return { success: false, error: 'Invalid email or password' };
       }
@@ -263,6 +310,25 @@ export class AuthService {
     await AsyncStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN);
   }
 
+  // Switch account - completely reset all data
+  async switchAccount(): Promise<void> {
+    try {
+      // Clear all auth data
+      await AsyncStorage.removeItem(STORAGE_KEYS.USER_CREDENTIALS);
+      await AsyncStorage.removeItem(STORAGE_KEYS.BIOMETRIC_ENABLED);
+      await AsyncStorage.removeItem(STORAGE_KEYS.SESSION_TOKEN);
+      
+      // Clear Starknet account data
+      const starknetService = (await import('./starknetAccountService')).StarknetAccountService.getInstance();
+      await starknetService.clearIncompleteAccount();
+      
+      console.log('Account data cleared successfully');
+    } catch (error) {
+      console.error('Failed to switch account:', error);
+      throw new Error('Failed to clear account data');
+    }
+  }
+
   // Create session
   private async createSession(email: string): Promise<void> {
     const sessionToken = this.generateSessionToken();
@@ -284,6 +350,89 @@ export class AuthService {
 
   // Generate session token
   private generateSessionToken(): string {
-    return Math.random().toString(36).substring(2) + Date.now().toString(36);
+    return CryptoUtils.generateToken() + Date.now().toString(36);
   }
+
+  /**
+   * Mock signup for development - instant response
+   */
+  private async mockSignUp(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    // Simulate a small delay for realism (100ms)
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Basic validation
+    if (!email || !password) {
+      return { success: false, error: 'Email and password are required' };
+    }
+
+    if (!this.isValidEmail(email)) {
+      return { success: false, error: 'Invalid email address' };
+    }
+
+    if (!this.isValidPassword(password)) {
+      return { success: false, error: 'Password must be at least 8 characters with 1 uppercase and 1 number' };
+    }
+
+    // Check if user already exists
+    const existingUser = await AsyncStorage.getItem(STORAGE_KEYS.USER_CREDENTIALS);
+    if (existingUser) {
+      return { 
+        success: false, 
+        error: 'An account already exists on this device. Please sign in or use "Switch Account" to create a new account.' 
+      };
+    }
+
+    // Store mock credentials (no password hashing)
+    const credentials: UserCredentials = {
+      email,
+      passwordHash: 'mock_hash_' + Date.now(), // Simple mock hash
+      biometricEnabled: false,
+      createdAt: Date.now(),
+    };
+
+    await AsyncStorage.setItem(
+      STORAGE_KEYS.USER_CREDENTIALS,
+      JSON.stringify(credentials)
+    );
+
+    // Create session
+    await this.createSession(email);
+
+    return { success: true };
+  }
+
+  /**
+   * Mock signin for development - instant response
+   */
+  private async mockSignIn(email: string, password: string): Promise<{ success: boolean; error?: string }> {
+    // Simulate a small delay for realism (100ms)
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Basic validation
+    if (!email || !password) {
+      return { success: false, error: 'Email and password are required' };
+    }
+
+    // Get stored credentials
+    const credentialsJson = await AsyncStorage.getItem(STORAGE_KEYS.USER_CREDENTIALS);
+    if (!credentialsJson) {
+      return { success: false, error: 'No account found. Please sign up.' };
+    }
+
+    const credentials: UserCredentials = JSON.parse(credentialsJson);
+
+    // Verify email
+    if (credentials.email !== email) {
+      return { success: false, error: 'Invalid email or password' };
+    }
+
+    // For mock mode, accept any password (no verification needed)
+    // In production, this would verify the password hash
+
+    // Create session
+    await this.createSession(email);
+
+    return { success: true };
+  }
+
 }

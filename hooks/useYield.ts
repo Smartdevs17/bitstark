@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { YieldService } from '../utils/yieldService';
+import { useAuth } from './useAuth';
 
 export interface YieldData {
   apy: number;
@@ -10,6 +12,7 @@ export interface YieldData {
 }
 
 export const useYield = () => {
+  const auth = useAuth();
   const [yieldData, setYieldData] = useState<YieldData>({
     apy: 0,
     earned: 0,
@@ -21,20 +24,29 @@ export const useYield = () => {
 
   useEffect(() => {
     const fetchYieldData = async () => {
+      if (!auth.isAuthenticated || !auth.starknetAddress) {
+        setYieldData(prev => ({
+          ...prev,
+          isLoading: false,
+          error: 'Not authenticated',
+        }));
+        return;
+      }
+
       try {
-        // TODO: Replace with actual Vesu/Troves SDK integration
-        await new Promise(resolve => setTimeout(resolve, 1200));
+        setYieldData(prev => ({ ...prev, isLoading: true, error: null }));
         
-        const mockData = {
-          apy: 8.5, // 8.5% APY
-          earned: 0.00234, // BTC earned
-          earnedUsd: 0.00234 * 95000,
-          deposited: 0.025, // BTC deposited
+        const yieldService = YieldService.getInstance();
+        const data = await yieldService.getYieldData(auth.starknetAddress);
+        
+        setYieldData({
+          apy: data.apy,
+          earned: data.earned,
+          earnedUsd: data.earnedUsd,
+          deposited: data.deposited,
           isLoading: false,
           error: null,
-        };
-
-        setYieldData(mockData);
+        });
       } catch (error) {
         setYieldData(prev => ({
           ...prev,
@@ -49,7 +61,9 @@ export const useYield = () => {
     // Refresh yield data every 30 seconds
     const interval = setInterval(fetchYieldData, 30000);
     return () => clearInterval(interval);
-  }, []);
+  }, [auth.isAuthenticated, auth.starknetAddress]);
 
-  return yieldData;
+  return {
+    ...yieldData,
+  };
 };
