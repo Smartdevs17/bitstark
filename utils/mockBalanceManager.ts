@@ -273,6 +273,45 @@ class MockBalanceManager {
   }
 
   /**
+   * Add BTC to wallet (for demo purposes)
+   */
+  public async addToWallet(amount: number): Promise<boolean> {
+    await this.waitForInitialization();
+    
+    if (amount <= 0) {
+      return false;
+    }
+
+    // Update wallet balance
+    this.balanceState.walletBalance += amount;
+    this.balanceState.totalBalance = this.balanceState.walletBalance + this.balanceState.portfolioBalance;
+
+    // Add transaction to history
+    const transaction: Transaction = {
+      id: `tx_${Date.now()}`,
+      type: 'deposit', // This represents adding BTC to wallet
+      amount,
+      timestamp: Date.now(),
+      status: 'completed',
+    };
+    this.transactions.unshift(transaction);
+
+    // Save to persistent storage
+    await Promise.all([
+      this.saveBalanceState(),
+      this.saveTransactions(),
+    ]);
+
+    // Notify listeners
+    this.notifyListeners();
+
+    console.log(`💰 Mock: Added ${amount} BTC to wallet`);
+    console.log(`📊 New Balances:`, this.balanceState);
+
+    return true;
+  }
+
+  /**
    * Reset balances to initial state (for testing)
    */
   public async resetBalances(): Promise<void> {

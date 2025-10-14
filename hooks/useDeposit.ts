@@ -77,9 +77,20 @@ export const useDeposit = (starknetAddress?: string) => {
       const mockBtcPrice = 95000; // Mock BTC price
       const usdValue = numValue * mockBtcPrice;
       
-      // Mock validation - just check if amount is positive
-      const isValid = numValue > 0 && numValue <= 10; // Max 10 BTC for demo
-      const error = isValid ? null : (numValue <= 0 ? 'Amount must be greater than 0' : 'Maximum deposit is 10 BTC');
+      // Get current wallet balance for validation
+      const currentBalance = await balanceManager.getBalanceState();
+      const availableBalance = currentBalance.walletBalance;
+      
+      // Mock validation - check against actual wallet balance and config limits
+      let error: string | null = null;
+      
+      if (numValue <= 0) {
+        error = 'Amount must be greater than 0';
+      } else if (numValue > availableBalance) {
+        error = `Insufficient balance. Available: ${availableBalance.toFixed(8)} BTC`;
+      } else if (numValue > 10) { // Max 10 BTC for demo
+        error = 'Maximum deposit is 10 BTC';
+      }
       
       setDepositState(prev => ({
         ...prev,
@@ -114,6 +125,19 @@ export const useDeposit = (starknetAddress?: string) => {
     }
 
     if (MOCK_MODE) {
+      // Get current balance to validate before deposit
+      const currentBalance = await balanceManager.getBalanceState();
+      const depositAmount = parseFloat(depositState.amount);
+      
+      // Final validation before execution
+      if (depositAmount > currentBalance.walletBalance) {
+        setDepositState(prev => ({
+          ...prev,
+          error: `Insufficient balance. Available: ${currentBalance.walletBalance.toFixed(8)} BTC`,
+        }));
+        return false;
+      }
+
       // Mock deposit execution - simulate the process
       setDepositState(prev => ({
         ...prev,
@@ -131,27 +155,45 @@ export const useDeposit = (starknetAddress?: string) => {
         setDepositState(prev => ({ ...prev, step: 'bridging' }));
       }, 2000);
 
-      setTimeout(() => {
-        // Move the deposited amount from wallet to portfolio
-        const depositAmount = parseFloat(depositState.amount);
-        const txHash = '0x' + Math.random().toString(16).substr(2, 64);
-        const btcTxHash = 'btc_' + Math.random().toString(16).substr(2, 64);
-        
-        balanceManager.depositToPortfolio(depositAmount, txHash, btcTxHash);
-        
-        setDepositState(prev => ({
-          ...prev,
-          isLoading: false,
-          step: 'completed',
-          transaction: {
-            txHash,
-            btcTxHash,
-            amount: depositAmount,
-            timestamp: Date.now(),
-            status: 'completed' as const,
-            fee: prev.estimatedFee,
-          },
-        }));
+      setTimeout(async () => {
+        try {
+          // Move the deposited amount from wallet to portfolio
+          const txHash = '0x' + Math.random().toString(16).substr(2, 64);
+          const btcTxHash = 'btc_' + Math.random().toString(16).substr(2, 64);
+          
+          const success = await balanceManager.depositToPortfolio(depositAmount, txHash, btcTxHash);
+          
+          if (success) {
+            setDepositState(prev => ({
+              ...prev,
+              isLoading: false,
+              step: 'completed',
+              transaction: {
+                txHash,
+                btcTxHash,
+                amount: depositAmount,
+                timestamp: Date.now(),
+                status: 'completed' as const,
+                fee: prev.estimatedFee,
+              },
+            }));
+          } else {
+            setDepositState(prev => ({
+              ...prev,
+              isLoading: false,
+              error: 'Deposit failed. Please try again.',
+              step: 'input',
+            }));
+          }
+        } catch (error) {
+          console.error('Mock deposit error:', error);
+          setDepositState(prev => ({
+            ...prev,
+            isLoading: false,
+            error: 'Deposit failed. Please try again.',
+            step: 'input',
+          }));
+        }
       }, 3000);
 
       return true;

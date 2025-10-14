@@ -48,10 +48,19 @@ export class AuthService {
 
       const types = await LocalAuthentication.supportedAuthenticationTypesAsync();
       
+      // Check for Face ID first (iOS)
       if (types.includes(LocalAuthentication.AuthenticationType.FACIAL_RECOGNITION)) {
         return { available: true, type: 'faceId' };
-      } else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
-        return { available: true, type: 'touchId' };
+      } 
+      // Check for Touch ID (iOS) or Fingerprint (Android)
+      else if (types.includes(LocalAuthentication.AuthenticationType.FINGERPRINT)) {
+        // For Android, we'll use 'fingerprint' type
+        // For iOS, we'll use 'touchId' type
+        const platform = require('react-native').Platform.OS;
+        return { 
+          available: true, 
+          type: platform === 'android' ? 'fingerprint' : 'touchId' 
+        };
       }
 
       return { available: false, type: 'none' };
@@ -64,8 +73,20 @@ export class AuthService {
   // Authenticate with biometric
   async authenticateWithBiometric(): Promise<boolean> {
     try {
+      const biometric = await this.isBiometricAvailable();
+      let promptMessage = 'Unlock BitStark';
+      
+      // Customize prompt message based on biometric type
+      if (biometric.type === 'faceId') {
+        promptMessage = 'Use Face ID to unlock BitStark';
+      } else if (biometric.type === 'fingerprint') {
+        promptMessage = 'Use your fingerprint to unlock BitStark';
+      } else if (biometric.type === 'touchId') {
+        promptMessage = 'Use Touch ID to unlock BitStark';
+      }
+
       const result = await LocalAuthentication.authenticateAsync({
-        promptMessage: 'Unlock BitStark',
+        promptMessage,
         fallbackLabel: 'Use Password',
         disableDeviceFallback: false,
       });
