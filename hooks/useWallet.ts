@@ -53,6 +53,7 @@ export const useWallet = () => {
 
       // Listen for balance changes
       const handleBalanceChange = (newState: any) => {
+        const btcPrice = 95000; // Mock BTC price
         setWalletState(prev => ({
           ...prev,
           btcBalance: newState.walletBalance,

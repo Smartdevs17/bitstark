@@ -133,7 +133,7 @@ export default function SetupBiometricScreen() {
       </ScrollView>
 
       {/* Fixed Bottom Actions */}
-      <View className="p-6 pb-8 bg-black">
+      <View className="p-6 pb-20 bg-black">
         <TouchableOpacity
           onPress={handleEnableBiometric}
           disabled={auth.isLoading}
