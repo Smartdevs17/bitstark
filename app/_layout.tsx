@@ -12,6 +12,9 @@ export default function RootLayout() {
           contentStyle: { backgroundColor: '#000000' },
         }}
       >
+        <Stack.Screen name="index" />
+        <Stack.Screen name="onboarding" />
+        <Stack.Screen name="auth" />
         <Stack.Screen name="(tabs)" />
         <Stack.Screen 
           name="deposit/index"

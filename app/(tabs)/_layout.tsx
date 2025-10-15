@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
 export default function TabLayout() {
   return (
@@ -10,15 +10,16 @@ export default function TabLayout() {
           backgroundColor: '#000000',
           borderTopColor: '#27272a',
           borderTopWidth: 1,
-          height: 90,
-          paddingBottom: 30,
-          paddingTop: 10,
+          height: 120,
+          paddingBottom: 60,
+          paddingTop: 8,
         },
         tabBarActiveTintColor: '#F7931A',
         tabBarInactiveTintColor: '#71717a',
         tabBarLabelStyle: {
-          fontSize: 12,
+          fontSize: 11,
           fontWeight: '600',
+          marginTop: 2,
         },
       }}
     >
@@ -27,8 +28,8 @@ export default function TabLayout() {
         options={{
           title: 'Home',
           tabBarIcon: ({ color, size }) => (
-            <View style={{ width: size, height: size }}>
-              <HomeIcon color={color} size={size} />
+            <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: size * 0.7, color }}>🏠</Text>
             </View>
           ),
         }}
@@ -38,8 +39,30 @@ export default function TabLayout() {
         options={{
           title: 'Portfolio',
           tabBarIcon: ({ color, size }) => (
-            <View style={{ width: size, height: size }}>
-              <PortfolioIcon color={color} size={size} />
+            <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: size * 0.7, color }}>💼</Text>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="earn"
+        options={{
+          title: 'Earn',
+          tabBarIcon: ({ color, size }) => (
+            <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: size * 0.7, color }}>💰</Text>
+            </View>
+          ),
+        }}
+      />
+      <Tabs.Screen
+        name="activity"
+        options={{
+          title: 'Activity',
+          tabBarIcon: ({ color, size }) => (
+            <View style={{ width: size, height: size, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={{ fontSize: size * 0.7, color }}>📊</Text>
             </View>
           ),
         }}
@@ -47,26 +70,3 @@ export default function TabLayout() {
     </Tabs>
   );
 }
-
-// Simple icon components (will be replaced with proper icons later)
-const HomeIcon = ({ color, size }: { color: string; size: number }) => (
-  <View 
-    style={{ 
-      width: size, 
-      height: size, 
-      backgroundColor: color,
-      borderRadius: size / 4,
-    }} 
-  />
-);
-
-const PortfolioIcon = ({ color, size }: { color: string; size: number }) => (
-  <View 
-    style={{ 
-      width: size, 
-      height: size, 
-      backgroundColor: color,
-      borderRadius: size / 2,
-    }} 
-  />
-);

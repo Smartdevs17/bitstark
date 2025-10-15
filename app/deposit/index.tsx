@@ -1,12 +1,13 @@
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { Linking, SafeAreaView, ScrollView, StatusBar, Text, View } from 'react-native';
+import { Linking, SafeAreaView, ScrollView, StatusBar, Text, TouchableOpacity, View } from 'react-native';
 import { AmountInput } from '../../components/AmountInput';
 import { DepositButton } from '../../components/DepositButton';
 import { showErrorToast, showTransactionToast } from '../../components/ToastConfig';
 import { useDeposit } from '../../hooks/useDeposit';
 import { useWallet } from '../../hooks/useWallet';
 import { getExplorerUrl } from '../../utils/config';
+import MockBalanceManager from '../../utils/mockBalanceManager';
 
 export default function DepositScreen() {
   const router = useRouter();
@@ -67,7 +68,7 @@ export default function DepositScreen() {
       
       <ScrollView 
         className="flex-1"
-        contentContainerClassName="p-6"
+        contentContainerStyle={{ padding: 24 }}
       >
         {/* Header */}
         <View className="mb-8">
@@ -108,6 +109,30 @@ export default function DepositScreen() {
           maxValue={wallet.btcBalance}
           error={deposit.error}
         />
+
+        {/* Add BTC Button (for demo purposes) */}
+        {wallet.btcBalance < 0.01 && (
+          <View className="bg-amber-900/20 border border-amber-500/30 rounded-2xl p-4 mb-4">
+            <Text className="text-amber-400 text-sm font-medium mb-2">
+              Low Balance Demo
+            </Text>
+            <Text className="text-amber-300 text-xs mb-3">
+              Add more BTC to your wallet for testing
+            </Text>
+            <TouchableOpacity
+              onPress={async () => {
+                const balanceManager = MockBalanceManager.getInstance();
+                await balanceManager.addToWallet(0.1); // Add 0.1 BTC
+              }}
+              className="bg-amber-500 rounded-xl py-2 px-4 items-center"
+              activeOpacity={0.8}
+            >
+              <Text className="text-black text-sm font-bold">
+                + Add 0.1 BTC
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Transaction Details */}
         <View className="bg-zinc-900 rounded-2xl p-6 mb-4">
